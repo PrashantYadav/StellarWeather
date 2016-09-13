@@ -266,6 +266,9 @@ public class ForecastFragment extends Fragment {
                         final String UNITS_PARAM = "units";
                         final String DAYS_PARAM = "cnt";
                         final String APPID_PARAM = "APPID";
+
+
+
                     Log.e("hello","3");
 
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
