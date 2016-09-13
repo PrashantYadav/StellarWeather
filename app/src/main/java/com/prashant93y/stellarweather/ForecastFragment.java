@@ -1,8 +1,12 @@
 package com.prashant93y.stellarweather;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
 import android.util.Log;
@@ -12,8 +16,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+
+import com.sdsmdg.tastytoast.TastyToast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -54,6 +61,7 @@ public class ForecastFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.forecast_fragment, menu);
+        inflater.inflate(R.menu.detail,menu);
     }
 
     @Override
@@ -63,9 +71,14 @@ public class ForecastFragment extends Fragment {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
+            Log.e("Called","Refresh");
             FetchWeatherTask weatherTask = new FetchWeatherTask();
             weatherTask.execute("94043");
             return true;
+        }
+        else if(id == R.id.action_settings){
+            Log.e("Called","Settings");
+            startActivity(new Intent(getActivity(), SettingsActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }
@@ -103,6 +116,16 @@ public class ForecastFragment extends Fragment {
         // Get a reference to the ListView, and attach this adapter to it.
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(mForecastAdapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String data = mForecastAdapter.getItem(position);
+                Intent i = new Intent(getActivity(), DetailActivity.class);
+                i.putExtra("weather_data",data);
+                startActivity(i);
+            }
+        });
 
         return rootView;
     }
@@ -244,16 +267,20 @@ public class ForecastFragment extends Fragment {
                         final String DAYS_PARAM = "cnt";
                         final String APPID_PARAM = "APPID";
                     Log.e("hello","3");
+
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    String location = prefs.getString(getString(R.string.pref_location_key), 94043+"");
+
                     Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                                .appendQueryParameter(QUERY_PARAM, "94043")
+                                .appendQueryParameter(QUERY_PARAM, location)
                                 .appendQueryParameter(FORMAT_PARAM, format)
                                 .appendQueryParameter(UNITS_PARAM, units)
                                 .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
                                 .appendQueryParameter(APPID_PARAM, "b090adf6bf1fbc4935e40603a96a554c")
                                 .build();
 
-                        URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7&APPID=b090adf6bf1fbc4935e40603a96a554c");
-
+                        //URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7&APPID=b090adf6bf1fbc4935e40603a96a554c");
+                        URL url = new URL(builtUri.toString());
                         Log.e(LOG_TAG, "Built URI " + builtUri.toString());
 
                         // Create the request to OpenWeatherMap, and open the connection
