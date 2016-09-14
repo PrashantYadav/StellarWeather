@@ -44,6 +44,21 @@ import java.util.List;
  */
 public class ForecastFragment extends Fragment {
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        updateWeather();
+    }
+
+    private void updateWeather(){
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = pref.getString(getString(R.string.pref_location_key),"94943");
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        weatherTask.execute(location);
+    }
+
+
     private ArrayAdapter<String> mForecastAdapter;
     List<String> weekForecast;
 
@@ -72,8 +87,10 @@ public class ForecastFragment extends Fragment {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
             Log.e("Called","Refresh");
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String location = prefs.getString(getString(R.string.pref_location_key),"94943");
             FetchWeatherTask weatherTask = new FetchWeatherTask();
-            weatherTask.execute("94043");
+            weatherTask.execute(location);
             return true;
         }
         else if(id == R.id.action_settings){
@@ -89,16 +106,16 @@ public class ForecastFragment extends Fragment {
 
 //         //Code removed
 //         //Create some dummy data for the ListView.  Here's a sample weekly forecast
-        String[] data = {
-                "Mon 6/23 - Sunny - 31/17",
-                "Tue 6/24 - Foggy - 21/8",
-                "Wed 6/25 - Cloudy - 22/17",
-                "Thurs 6/26 - Rainy - 18/11",
-                "Fri 6/27 - Foggy - 21/10",
-                "Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18",
-                "Sun 6/29 - Sunny - 20/7"
-        };
-        weekForecast = new ArrayList<String>(Arrays.asList(data));
+//        String[] data = {
+//                "Mon 6/23 - Sunny - 31/17",
+//                "Tue 6/24 - Foggy - 21/8",
+//                "Wed 6/25 - Cloudy - 22/17",
+//                "Thurs 6/26 - Rainy - 18/11",
+//                "Fri 6/27 - Foggy - 21/10",
+//                "Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18",
+//                "Sun 6/29 - Sunny - 20/7"
+//        };
+//        weekForecast = new ArrayList<String>(Arrays.asList(data));
 
         // Now that we have some dummy forecast data, create an ArrayAdapter.
         // The ArrayAdapter will take data from a source (like our dummy forecast) and
@@ -109,7 +126,7 @@ public class ForecastFragment extends Fragment {
                         getActivity(), // The current context (this activity)
                         R.layout.list_item_forecast, // The name of the layout ID.
                         R.id.list_item_forecast_textView, // The ID of the textview to populate.
-                        weekForecast);
+                        new ArrayList<String>());
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
@@ -226,7 +243,18 @@ public class ForecastFragment extends Fragment {
                         double low = temperatureObject.getDouble(OWM_MIN);
 
                         highAndLow = formatHighLows(high, low);
-                        resultStrs[i] = day + " - " + description + " - " + highAndLow;
+                        SharedPreferences tempPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                        String tempScale = tempPref.getString(getString(R.string.pref_temperature_key), "0");
+                        if(tempScale.equals("0")){
+                            resultStrs[i] = day + " - " + description + " - " + highAndLow;
+                        }
+                        else{
+                            high = high*1.8 + 32;
+                            low = low*1.5 + 32;
+                            highAndLow = formatHighLows(high, low);
+                            resultStrs[i] = day + " - " + description + " - " + highAndLow;
+                        }
+
                     }
 
                     for (String s : resultStrs) {
@@ -271,11 +299,9 @@ public class ForecastFragment extends Fragment {
 
                     Log.e("hello","3");
 
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    String location = prefs.getString(getString(R.string.pref_location_key), 94043+"");
 
                     Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                                .appendQueryParameter(QUERY_PARAM, location)
+                                .appendQueryParameter(QUERY_PARAM, params[0])
                                 .appendQueryParameter(FORMAT_PARAM, format)
                                 .appendQueryParameter(UNITS_PARAM, units)
                                 .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
