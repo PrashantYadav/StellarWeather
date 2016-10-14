@@ -6,4 +6,18 @@
         android:title="Refresh"
         app:showAsAction="never"
         />
+
+    <item
+        android:id="@+id/action_view_on_map"
+        android:title="View on map"
+        app:showAsAction="never"
+        />
+
+
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:title="@string/action_settings"
+        app:showAsAction="never" />
+
 </menu>
